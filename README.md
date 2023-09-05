@@ -5,4 +5,4 @@ git clone https://github.com/prasanthc41m/switch-x11-wayland.git
 cd switch-x11-wayland
 make install
 ```
-![logo](https://github.com/prasanthc41m/ping-extension/blob/main/%20pin-extension.png)
+![logo](https://github.com/prasanthc41m/ping-extension/blob/main/ping-extension.png)
