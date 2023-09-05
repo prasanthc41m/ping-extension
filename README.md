@@ -1,4 +1,4 @@
-# Ping GNOME Shell Extension
+# GNOME Shell Extension - Ping
 A simple GNOME Shell extension that pings your domain or IP.
 
 ## Installation
