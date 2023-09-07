@@ -5,6 +5,5 @@
   "shell-version": [ "44" ],
   "url": "https://github.com/prasanthc41m/ping-extension",
   "uuid": "ping@prasanthc41m.github.com",
-  "settings-schema": "org.gnome.shell.extensions.ping",
   "version": 1
 }
