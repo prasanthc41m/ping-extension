@@ -1,11 +1,11 @@
-const St = imports.gi.St;
-const Main = imports.ui.main;
-const GLib = imports.gi.GLib;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const GObject = imports.gi.GObject;
-const Clutter = imports.gi.Clutter;
-const Gio = imports.gi.Gio;
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import GLib from 'gi://GLib';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import GObject from 'gi://GObject';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
 
 let domainToPing = 'google.com'; // Change this to the domain or IP address you want to ping
 let timeoutId = null;
@@ -76,19 +76,21 @@ const Indicator = GObject.registerClass(
 
 let indicator;
 
-function init() {}
+export default class PingExtension {
 
-function enable() {
-    indicator = new Indicator();
-    Main.panel.addToStatusArea('indicator', indicator);
-}
+    init() {}
 
-function disable() {
-    if (timeoutId) {
-        GLib.Source.remove(timeoutId);
-        timeoutId = null;
+    enable() {
+        indicator = new Indicator();
+        Main.panel.addToStatusArea('indicator', indicator);
     }
-    indicator.destroy();
-    indicator = null; // Set indicator to null
-}
 
+    disable() {
+        if (timeoutId) {
+            GLib.Source.remove(timeoutId);
+            timeoutId = null;
+        }
+        indicator.destroy();
+        indicator = null; // Set indicator to null
+    }
+}
