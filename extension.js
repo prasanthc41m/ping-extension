@@ -78,8 +78,6 @@ let indicator;
 
 export default class PingExtension {
 
-    init() {}
-
     enable() {
         indicator = new Indicator();
         Main.panel.addToStatusArea('indicator', indicator);
