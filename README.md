@@ -20,6 +20,6 @@ make install
 https://extensions.gnome.org/extension/6260/ping/
 
 ## Contributors
-Thanks for your support :heart:.
+Thanks for your support :heart:
 
 [ArDrift](https://github.com/ArDrift) Arnold Schelb 
