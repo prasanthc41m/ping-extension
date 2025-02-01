@@ -9,6 +9,8 @@ import Gio from 'gi://Gio';
 
 let domainToPing = 'google.com'; // Change this to the domain or IP address you want to ping
 let timeoutId = null;
+let soundEnabled = true; // Default sound setting
+let lastStatus = null; // Track the last status to detect changes
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -19,6 +21,8 @@ const Indicator = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER
             });
             this.add_child(this._label);
+
+            // Add entry for domain/IP input
             this._entryItem = new PopupMenu.PopupMenuItem('');
             this._entryItem.actor.reactive = false;
             this._entryItem.actor.can_focus = false;
@@ -33,6 +37,14 @@ const Indicator = GObject.registerClass(
             });
             this._entryItem.add_child(this._entry);
             this.menu.addMenuItem(this._entryItem);
+
+            // Add toggle for sound
+            this._soundToggle = new PopupMenu.PopupSwitchMenuItem('Enable Sound', soundEnabled);
+            this._soundToggle.connect('toggled', (item) => {
+                soundEnabled = item.state;
+            });
+            this.menu.addMenuItem(this._soundToggle);
+
             this.checkPingAsync();
         }
 
@@ -41,7 +53,7 @@ const Indicator = GObject.registerClass(
                 try {
                     let out = await new Promise((resolve, reject) => {
                         let proc = new Gio.Subprocess({
-                            argv: ['ping', '-c', '1', domainToPing],
+                            argv: ['ping', '-c', '1', '-W', '2', domainToPing],
                             flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
                         });
                         proc.init(null);
@@ -59,16 +71,53 @@ const Indicator = GObject.registerClass(
                         });
                     });
                     let match = /time=([\d.]+)/.exec(out);
-                    if (match) {
-                        let time = Math.round(parseFloat(match[1]));
-                        this._label.set_text(`${time} ms`);
-                    } else {
-                        this._label.set_text('No response');
+                    let currentStatus = match ? `${Math.round(parseFloat(match[1]))} ms` : 'No response';
+
+                    // Update label
+                    this._label.set_text(currentStatus);
+
+                    // Check for state changes between "ms" and "No response"
+                    if (soundEnabled && this.isStatusChangeSignificant(lastStatus, currentStatus)) {
+                        this.playSound();
                     }
+
+                    // Update last status
+                    lastStatus = currentStatus;
+
                 } catch (e) {
-                    this._label.set_text('No response');
+                    let currentStatus = 'No response';
+                    this._label.set_text(currentStatus);
+
+                    // Check for state changes between "ms" and "No response"
+                    if (soundEnabled && this.isStatusChangeSignificant(lastStatus, currentStatus)) {
+                        this.playSound();
+                    }
+
+                    // Update last status
+                    lastStatus = currentStatus;
                 }
                 await new Promise(resolve => timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, resolve));
+            }
+        }
+
+        isStatusChangeSignificant(previousStatus, currentStatus) {
+            // Check if the state changes between "ms" and "No response"
+            const isPreviousSuccess = previousStatus && previousStatus.endsWith(' ms');
+            const isCurrentSuccess = currentStatus && currentStatus.endsWith(' ms');
+            return isPreviousSuccess !== isCurrentSuccess;
+        }
+
+        playSound() {
+            // Play a sound file (replace with the path to your sound file)
+            let soundFile = Gio.File.new_for_path('/usr/share/sounds/gnome/default/alerts/click.ogg');
+            if (soundFile.query_exists(null)) {
+                let player = new Gio.Subprocess({
+                    argv: ['paplay', soundFile.get_path()],
+                    flags: Gio.SubprocessFlags.NONE,
+                });
+                player.init(null);
+            } else {
+                log('Sound file not found: ' + soundFile.get_path());
             }
         }
     }
