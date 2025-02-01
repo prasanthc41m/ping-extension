@@ -53,7 +53,7 @@ const Indicator = GObject.registerClass(
                 try {
                     let out = await new Promise((resolve, reject) => {
                         let proc = new Gio.Subprocess({
-                            argv: ['ping', '-c', '1', domainToPing],
+                            argv: ['ping', '-c', '1', '-w', '1', domainToPing],
                             flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
                         });
                         proc.init(null);
