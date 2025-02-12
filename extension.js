@@ -38,6 +38,9 @@ const Indicator = GObject.registerClass(
 
         async checkPingAsync() {
             while (true) {
+                if (timeoutId) {
+                    GLib.Source.remove(timeoutId);
+                }
                 try {
                     let out = await new Promise((resolve, reject) => {
                         let proc = new Gio.Subprocess({
@@ -66,7 +69,7 @@ const Indicator = GObject.registerClass(
                         this._label.set_text('No response');
                     }
                 } catch (e) {
-                    this._label.set_text('No response');
+                    this._label.set_text(`Error: ${e.message}`);
                 }
                 await new Promise(resolve => timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, resolve));
             }
@@ -92,3 +95,4 @@ export default class PingExtension {
         indicator = null; // Set indicator to null
     }
 }
+
