@@ -26,5 +26,5 @@ Thanks for your support :heart:
 ##
 
 > [!NOTE]  
-> Ping extended version is available with aditional features based on request, development in progress. To test and use in below link.
+> Ping extended version is available with aditional features based on request, development in progress. To test and use go to below link.
 > https://github.com/prasanthc41m/ping-extended-extension
