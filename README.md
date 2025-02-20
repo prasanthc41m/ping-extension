@@ -18,8 +18,13 @@ make install
 
 
 https://extensions.gnome.org/extension/6260/ping/
-
+##
 ## Contributors
 Thanks for your support :heart:
-
 [ArDrift](https://github.com/ArDrift) Arnold Schelb 
+
+##
+
+> [!NOTE]  
+> Ping extended version is available with aditional features based on request, development in progress. To test and use in below link.
+> https://github.com/prasanthc41m/ping-extended-extension
