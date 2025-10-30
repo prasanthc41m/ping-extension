@@ -3,7 +3,9 @@
   "description": "A simple GNOME Shell extension that pings your domain or IP. By default this will ping google.com.",
   "name": "Ping",
   "shell-version": [
-    "47"
+    "47",
+    "48",
+    "49"
   ],
   "url": "https://github.com/prasanthc41m/ping-extension",
   "uuid": "ping@prasanthc41m.github.com",
