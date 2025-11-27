@@ -20,8 +20,8 @@ make install
 https://extensions.gnome.org/extension/6260/ping/
 ##
 ## Contributors
-Thanks for your support :heart:
-[ArDrift](https://github.com/ArDrift) Arnold Schelb 
+[ArDrift](https://github.com/ArDrift) Arnold Schelb </br>
+[MeTaNaNima](https://github.com/MeTaNaNima) Nima Amani
 
 ##
 
