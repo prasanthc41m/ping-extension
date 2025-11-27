@@ -14,27 +14,27 @@ const Indicator = GObject.registerClass(
 
       // Configuration
       this.SETTINGS_FILE_PATH = GLib.build_filenamev([GLib.get_user_config_dir(), 'ping', 'settings.json']);
-      this.domainToPing = 'google.com'; // Default target
+      this.domainToPing = 'google.com';
       this.soundEnabled = true;
-      this.panelPosition = 'left'; // 'left' or 'center'
-      this.panelOrder = 0; // Order in the panel box
+      this.panelPosition = 'right';   // 'left', 'center', 'right'
+      this.panelOrder = 0;
       this.timeoutId = null;
       this.lastStatus = null;
 
-      // Load settings
+      // Load saved settings
       this._loadSettings();
 
-      // UI Elements
+      // Label
       this._label = new St.Label({ text: 'Pinging...', y_align: Clutter.ActorAlign.CENTER });
       this.add_child(this._label);
 
-      // Domain/IP Input
+      // Domain Input
       this._entry = new St.Entry({
         hint_text: 'Enter domain or IP',
         track_hover: true,
         can_focus: true,
       });
-      this._entry.set_text(this.domainToPing); // Set current domain
+      this._entry.set_text(this.domainToPing);
       this._entry.clutter_text.connect('activate', () => {
         this.domainToPing = this._entry.get_text();
         this._saveSettings();
@@ -52,14 +52,13 @@ const Indicator = GObject.registerClass(
       });
       this.menu.addMenuItem(this._soundToggle);
 
-      // Panel Position Selection
+      // Panel Position Section
       const positionSection = new PopupMenu.PopupMenuSection();
       const positionLabel = new St.Label({ text: 'Panel Position:', style: 'padding: 4px;' });
       positionSection.actor.add_child(positionLabel);
 
       const positionBox = new St.BoxLayout({ style: 'spacing: 8px; padding: 4px;' });
 
-      // Store button references for style updates
       this._leftButton = new St.Button({ label: 'Left', style: 'padding: 4px 8px;' });
       this._leftButton.connect('clicked', () => {
         this.panelPosition = 'left';
@@ -93,10 +92,9 @@ const Indicator = GObject.registerClass(
       positionSection.actor.add_child(positionBox);
       this.menu.addMenuItem(positionSection);
 
-      // Update button styles based on current position
       this._updateButtonStyles();
 
-      // Panel Order Control
+      // Panel Order Section
       const orderSection = new PopupMenu.PopupMenuSection();
       const orderLabel = new St.Label({ text: 'Panel Order:', style: 'padding: 4px;' });
       orderSection.actor.add_child(orderLabel);
@@ -113,8 +111,8 @@ const Indicator = GObject.registerClass(
 
       this._orderInput = new St.Entry({
         text: this.panelOrder.toString(),
-        style: 'width: 60px;',
-        can_focus: true,
+                                      style: 'width: 60px;',
+                                      can_focus: true,
       });
       this._orderInput.clutter_text.connect('activate', () => {
         const value = parseInt(this._orderInput.get_text()) || 0;
@@ -126,7 +124,7 @@ const Indicator = GObject.registerClass(
 
       const plusButton = new St.Button({ label: '+', style: 'padding: 4px 12px;' });
       plusButton.connect('clicked', () => {
-        this.panelOrder = this.panelOrder + 1;
+        this.panelOrder += 1;
         this._orderInput.set_text(this.panelOrder.toString());
         this._saveSettings();
         this._updatePosition();
@@ -138,56 +136,59 @@ const Indicator = GObject.registerClass(
       orderSection.actor.add_child(orderBox);
       this.menu.addMenuItem(orderSection);
 
-      // Start the recurring ping check
+      // Start ping loop
       this._startPingLoop();
     }
 
-    _updateButtonStyles() {
-      // Base style for inactive buttons
-      const inactiveStyle = 'padding: 4px 8px;';
-      // Active style with background color and border
-      const activeStyle = 'padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 4px;';
-
-      // Reset all buttons to inactive style
-      if (this._leftButton) {
-        this._leftButton.set_style(inactiveStyle);
-      }
-      if (this._centerButton) {
-        this._centerButton.set_style(inactiveStyle);
-      }
-      if (this._rightButton) {
-        this._rightButton.set_style(inactiveStyle);
+    _addIndicatorToPanel() {
+      if (this.get_parent()) {
+        this.get_parent().remove_child(this);
       }
 
-      // Apply active style to current position button
+      // Which panel box?
+      let targetBox;
       switch (this.panelPosition) {
-        case 'left':
-          if (this._leftButton) this._leftButton.set_style(activeStyle);
-          break;
         case 'center':
-          if (this._centerButton) this._centerButton.set_style(activeStyle);
+          targetBox = Main.panel._centerBox;
           break;
         case 'right':
-          if (this._rightButton) this._rightButton.set_style(activeStyle);
+          targetBox = Main.panel._rightBox;
+          break;
+        case 'left':
+        default:
+          targetBox = Main.panel._leftBox;
           break;
       }
+
+      const order = Math.max(0, this.panelOrder || 0);
+      const children = targetBox.get_children();
+      const insertIndex = Math.min(order, children.length);
+
+      targetBox.insert_child_at_index(this, insertIndex);
+    }
+
+    _updateButtonStyles() {
+      const inactive = 'padding: 4px 8px;';
+      const active = 'padding: 4px 8px; border: 1px solid rgba(255,255,255,0.5); border-radius: 4px;';
+
+      this._leftButton.set_style(inactive);
+      this._centerButton.set_style(inactive);
+      this._rightButton.set_style(inactive);
+
+      if (this.panelPosition === 'left') this._leftButton.set_style(active);
+      if (this.panelPosition === 'center') this._centerButton.set_style(active);
+      if (this.panelPosition === 'right') this._rightButton.set_style(active);
     }
 
     _updatePosition() {
-      // This will be called from the extension class to reposition the indicator
-      if (this._extensionInstance) {
-        this._extensionInstance._repositionIndicator();
-      }
+      this._addIndicatorToPanel();
     }
 
     _startPingLoop() {
-      // Clear any existing timeout
       if (this.timeoutId) {
         GLib.Source.remove(this.timeoutId);
         this.timeoutId = null;
       }
-
-      // Create a recurring ping check every 1 second
       this.timeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 1, () => this._checkPing());
     }
 
@@ -203,7 +204,7 @@ const Indicator = GObject.registerClass(
         this._handleSound('No response');
         this.lastStatus = 'No response';
       }
-      return GLib.SOURCE_CONTINUE; // Keep the timer running
+      return GLib.SOURCE_CONTINUE;
     }
 
     async _executePingCommand() {
@@ -212,6 +213,7 @@ const Indicator = GObject.registerClass(
           argv: ['ping', '-c', '1', '-O', this.domainToPing],
           flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
         });
+
         proc.init(null);
 
         proc.communicate_utf8_async(null, null, (proc, res) => {
@@ -236,7 +238,8 @@ const Indicator = GObject.registerClass(
     }
 
     _handleSound(currentStatus) {
-      if (!this.soundEnabled || !this._isStatusChangeSignificant(currentStatus)) return;
+      if (!this.soundEnabled || !this._isStatusChangeSignificant(currentStatus))
+        return;
 
       const player = global.display.get_sound_player();
       if (!player) {
@@ -291,13 +294,14 @@ const Indicator = GObject.registerClass(
           panelPosition: this.panelPosition,
           panelOrder: this.panelOrder,
         };
+
         const file = Gio.File.new_for_path(this.SETTINGS_FILE_PATH);
         file.replace_contents(
           JSON.stringify(settings, null, 2),
-          null,
-          false,
-          Gio.FileCreateFlags.REPLACE_DESTINATION,
-          null
+                              null,
+                              false,
+                              Gio.FileCreateFlags.REPLACE_DESTINATION,
+                              null
         );
       } catch (e) {
         console.error(`Settings save error: ${e}`);
@@ -311,48 +315,12 @@ const Indicator = GObject.registerClass(
       }
       super.destroy();
     }
-  }
-);
+  });
 
 export default class PingExtension {
   enable() {
     this.indicator = new Indicator();
-    this.indicator._extensionInstance = this;
-    this._addIndicatorToPanel();
-  }
-
-  _addIndicatorToPanel() {
-    if (!this.indicator) return;
-
-    // Remove from any existing position
-    if (this.indicator.get_parent()) {
-      this.indicator.get_parent().remove_child(this.indicator);
-    }
-
-    // Get the target box based on position
-    let targetBox;
-    switch (this.indicator.panelPosition) {
-      case 'center':
-        targetBox = Main.panel._centerBox;
-        break;
-      case 'right':
-        targetBox = Main.panel._rightBox;
-        break;
-      case 'left':
-      default:
-        targetBox = Main.panel._leftBox;
-        break;
-    }
-
-    // Add to the target box at the specified order
-    const order = Math.max(0, this.indicator.panelOrder || 0);
-    const currentChildren = targetBox.get_children();
-    const insertIndex = Math.min(order, currentChildren.length);
-    targetBox.insert_child_at_index(this.indicator, insertIndex);
-  }
-
-  _repositionIndicator() {
-    this._addIndicatorToPanel();
+    this.indicator._addIndicatorToPanel();
   }
 
   disable() {
